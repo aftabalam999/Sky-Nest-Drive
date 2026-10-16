@@ -1,0 +1,26 @@
+[
+  {
+    "id": "usr_5bdc8c2a70bb24c7",
+    "name": "Aftab Alam",
+    "email": "aftab@skynest.drive",
+    "password": "$2a$10$5J5A/mu9BadMlaXmxZ70UetJBalBGREOeQmhkpIgwONGkXXeV.CrO",
+    "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=Aftab%20Alam",
+    "storageUsedGB": 0,
+    "storageTotalGB": 15,
+    "plan": "Nest Cloud Standard (15 GB Free)",
+    "role": "Member",
+    "createdAt": "2026-10-16T04:13:58.876Z"
+  },
+  {
+    "id": "usr_9b2654234cb7c7a5",
+    "name": "Shivraj Sharma",
+    "email": "shivraj@skynest.drive",
+    "password": "$2a$10$Q44BlrV5L6YFLj6ebJive.GuLw87oKfuVrybKTnofxrP72ghn2qLK",
+    "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=Shivraj%20Sharma",
+    "storageUsedGB": 0,
+    "storageTotalGB": 15,
+    "plan": "Nest Cloud Standard (15 GB Free)",
+    "role": "Member",
+    "createdAt": "2026-10-16T05:08:54.764Z"
+  }
+]

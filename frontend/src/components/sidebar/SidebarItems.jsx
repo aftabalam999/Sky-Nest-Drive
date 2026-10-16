@@ -1,12 +1,17 @@
-import React from 'react'
 
-const SidebarItems = ({icon, title}) => {
+const SidebarItems = ({ icon, title, active }) => {
   return (
-    <div className='flex rounded-2xl p-2 ps-4 bg-white w-80 align-center justify-start gap-4 hover:bg-blue-200 cursor-pointer active:bg-blue-300'>
-        {icon}
-        <h2 className='text-xl'>{title}</h2>
+    <div
+      className={`flex items-center rounded-2xl p-2.5 ps-4 w-80 justify-start gap-4 transition-all cursor-pointer ${
+        active
+          ? 'bg-blue-200 text-blue-800 font-semibold shadow-sm'
+          : 'bg-white hover:bg-blue-100/70 text-gray-700 active:bg-blue-200'
+      }`}
+    >
+      {icon}
+      <h2 className="text-base sm:text-lg">{title}</h2>
     </div>
-  )
-}
+  );
+};
 
-export default SidebarItems
+export default SidebarItems;
