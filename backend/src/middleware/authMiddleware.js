@@ -11,7 +11,7 @@ export const protect = async (req, res, next) => {
     token = req.headers.authorization.split(' ')[1];
   }
 
-  if (!token) {
+  if (!token || token === 'null' || token === 'undefined') {
     return res.status(401).json({
       success: false,
       message: 'Access denied. No authorization token provided.',
@@ -24,7 +24,7 @@ export const protect = async (req, res, next) => {
       process.env.JWT_SECRET || 'sky_nest_drive_jwt_secret_super_secure_key_2026_xyz'
     );
 
-    const user = findById(decoded.id);
+    const user = await findById(decoded.id);
     if (!user) {
       return res.status(401).json({
         success: false,

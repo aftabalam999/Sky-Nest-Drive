@@ -1,108 +1,123 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const DATA_DIR = path.resolve(__dirname, '../../data');
-const USERS_FILE = path.join(DATA_DIR, 'users.json');
-
-// Ensure data folder and users.json exist
-function ensureDataFile() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, 'Please provide your full name.'],
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: [true, 'Please provide an email address.'],
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please provide a valid email format.'],
+    },
+    password: {
+      type: String,
+      required: [true, 'Please provide a password.'],
+      minlength: [6, 'Password must be at least 6 characters long.'],
+    },
+    avatar: {
+      type: String,
+      default: function () {
+        return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(this.name || 'User')}`;
+      },
+    },
+    storageUsedGB: {
+      type: Number,
+      default: 0.0,
+    },
+    storageTotalGB: {
+      type: Number,
+      default: 15.0,
+    },
+    plan: {
+      type: String,
+      default: 'Nest Cloud Standard (15 GB Free)',
+    },
+    role: {
+      type: String,
+      default: 'Member',
+    },
+  },
+  {
+    timestamps: true,
   }
-  if (!fs.existsSync(USERS_FILE)) {
-    fs.writeFileSync(USERS_FILE, JSON.stringify([], null, 2), 'utf-8');
-  }
-}
+);
 
-// Read all users
-export function readUsers() {
-  ensureDataFile();
+// Encrypt password using bcrypt before saving
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) {
+    return;
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+});
+
+// Compare password method
+userSchema.methods.comparePassword = async function (enteredPassword) {
+  if (!enteredPassword || !this.password) return false;
   try {
-    const raw = fs.readFileSync(USERS_FILE, 'utf-8');
-    return JSON.parse(raw || '[]');
-  } catch (err) {
-    console.error('Error reading users data:', err);
-    return [];
-  }
-}
-
-// Write users
-export function writeUsers(users) {
-  ensureDataFile();
-  try {
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
-    return true;
-  } catch (err) {
-    console.error('Error writing users data:', err);
+    return await bcrypt.compare(enteredPassword, this.password);
+  } catch {
     return false;
   }
+};
+
+export const User = mongoose.models.User || mongoose.model('User', userSchema);
+
+// --- Pure MongoDB Database Operations ---
+
+// Find user by email in MongoDB
+export async function findByEmail(email) {
+  if (!email || typeof email !== 'string') return null;
+  return await User.findOne({ email: email.trim().toLowerCase() });
 }
 
-// Find user by email (case-insensitive)
-export function findByEmail(email) {
-  if (!email) return null;
-  const users = readUsers();
-  return users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase()) || null;
-}
-
-// Find user by ID
-export function findById(id) {
+// Find user by ID in MongoDB
+export async function findById(id) {
   if (!id) return null;
-  const users = readUsers();
-  return users.find((u) => u.id === id) || null;
+  try {
+    return await User.findById(id);
+  } catch {
+    return null;
+  }
 }
 
-// Create new user with hashed password
+// Create new user in MongoDB
 export async function createUser({ name, email, password }) {
-  const users = readUsers();
-  const normalizedEmail = email.trim().toLowerCase();
-
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
-
-  const newUser = {
-    id: 'usr_' + crypto.randomBytes(8).toString('hex'),
+  const user = new User({
     name: name.trim(),
-    email: normalizedEmail,
-    password: hashedPassword,
-    avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name.trim())}`,
-    storageUsedGB: 0.0,
-    storageTotalGB: 15.0,
-    plan: 'Nest Cloud Standard (15 GB Free)',
-    role: 'Member',
-    createdAt: new Date().toISOString(),
-  };
+    email: email.trim().toLowerCase(),
+    password,
+  });
 
-  users.push(newUser);
-  writeUsers(users);
-
-  return newUser;
+  await user.save();
+  return user;
 }
 
 // Verify password
 export async function verifyPassword(plainPassword, hashedPassword) {
-  return bcrypt.compare(plainPassword, hashedPassword);
+  if (!plainPassword || !hashedPassword) return false;
+  try {
+    return await bcrypt.compare(plainPassword, hashedPassword);
+  } catch {
+    return false;
+  }
 }
 
 // Return user object without sensitive fields
 export function sanitizeUser(user) {
   if (!user) return null;
-  const { password, ...safeUser } = user;
+  const userObj = user.toObject ? user.toObject() : { ...user };
+  const { password, __v, ...safeUser } = userObj;
+  safeUser.id = userObj._id ? userObj._id.toString() : userObj.id || user.id;
+  delete safeUser._id;
   return safeUser;
 }
 
-export default {
-  readUsers,
-  writeUsers,
-  findByEmail,
-  findById,
-  createUser,
-  verifyPassword,
-  sanitizeUser,
-};
+export default User;

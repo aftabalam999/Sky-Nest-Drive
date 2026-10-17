@@ -9,7 +9,7 @@ import {
 // Helper to generate JWT token
 const signToken = (id) => {
   return jwt.sign(
-    { id },
+    { id: id ? id.toString() : '' },
     process.env.JWT_SECRET || 'sky_nest_drive_jwt_secret_super_secure_key_2026_xyz',
     {
       expiresIn: process.env.JWT_EXPIRES_IN || '7d',
@@ -18,19 +18,19 @@ const signToken = (id) => {
 };
 
 // @desc    Register a new user
-// @route   POST /api/auth/register
+// @route   POST /api/auth/register or /api/auth/signup
 export const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password } = req.body || {};
 
-    if (!name || !name.trim()) {
+    if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({
         success: false,
         message: 'Please provide your full name.',
       });
     }
 
-    if (!email || !email.trim()) {
+    if (!email || typeof email !== 'string' || !email.trim()) {
       return res.status(400).json({
         success: false,
         message: 'Please provide an email address.',
@@ -41,33 +41,33 @@ export const register = async (req, res) => {
     if (!emailRegex.test(email.trim())) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide a valid email format (e.g. user@domain.com).',
+        message: 'Please provide a valid email format.',
       });
     }
 
-    if (!password || password.length < 6) {
+    if (!password || typeof password !== 'string' || password.length < 6) {
       return res.status(400).json({
         success: false,
         message: 'Password must be at least 6 characters long.',
       });
     }
 
-    // Check if user already exists
-    const existingUser = findByEmail(email);
+    // Check if user already exists in MongoDB
+    const existingUser = await findByEmail(email);
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'An account with this email already exists. Please sign in.',
+        message: 'An account with this email already exists.',
       });
     }
 
-    // Create user in persistent database
+    // Create user in MongoDB
     const newUser = await createUser({ name, email, password });
-    const token = signToken(newUser.id);
+    const token = signToken(newUser._id || newUser.id);
 
     return res.status(201).json({
       success: true,
-      message: 'Account created successfully! Welcome to Sky Nest Drive.',
+      message: 'Account created successfully.',
       token,
       user: sanitizeUser(newUser),
     });
@@ -75,7 +75,7 @@ export const register = async (req, res) => {
     console.error('Registration error:', err);
     return res.status(500).json({
       success: false,
-      message: 'Server error while creating account. Please try again.',
+      message: 'Server error while creating account.',
     });
   }
 };
@@ -84,28 +84,28 @@ export const register = async (req, res) => {
 // @route   POST /api/auth/login
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
 
-    if (!email || !email.trim()) {
+    if (!email || typeof email !== 'string' || !email.trim()) {
       return res.status(400).json({
         success: false,
         message: 'Please enter your email address.',
       });
     }
 
-    if (!password) {
+    if (!password || typeof password !== 'string') {
       return res.status(400).json({
         success: false,
         message: 'Please enter your password.',
       });
     }
 
-    // Find user by email
-    const user = findByEmail(email);
+    // Find user in MongoDB by email
+    const user = await findByEmail(email);
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'No account found with this email. Please create an account first.',
+        message: 'Invalid email or password.',
       });
     }
 
@@ -114,16 +114,16 @@ export const login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid password. Please check your credentials.',
+        message: 'Invalid email or password.',
       });
     }
 
     // Generate JWT
-    const token = signToken(user.id);
+    const token = signToken(user._id || user.id);
 
     return res.status(200).json({
       success: true,
-      message: 'Logged in successfully! Welcome back.',
+      message: 'Logged in successfully.',
       token,
       user: sanitizeUser(user),
     });
@@ -131,7 +131,7 @@ export const login = async (req, res) => {
     console.error('Login error:', err);
     return res.status(500).json({
       success: false,
-      message: 'Server error while authenticating. Please try again.',
+      message: 'Server error while authenticating.',
     });
   }
 };
@@ -157,25 +157,18 @@ export const getMe = async (req, res) => {
 // @route   POST /api/auth/forgot-password
 export const forgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email || !email.trim()) {
+    const { email } = req.body || {};
+    if (!email || typeof email !== 'string' || !email.trim()) {
       return res.status(400).json({
         success: false,
         message: 'Please provide an email address.',
       });
     }
 
-    const user = findByEmail(email);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'No account registered with this email address.',
-      });
-    }
-
+    // Safe response: does not reveal whether the email exists in system
     return res.status(200).json({
       success: true,
-      message: `Password reset instructions have been sent to ${email}.`,
+      message: 'If an account exists with this email, password reset instructions have been sent.',
     });
   } catch (err) {
     console.error('forgotPassword error:', err);
@@ -186,9 +179,19 @@ export const forgotPassword = async (req, res) => {
   }
 };
 
+// @desc    User logout
+// @route   POST /api/auth/logout
+export const logout = async (req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: 'Logged out successfully.',
+  });
+};
+
 export default {
   register,
   login,
   getMe,
   forgotPassword,
+  logout,
 };
