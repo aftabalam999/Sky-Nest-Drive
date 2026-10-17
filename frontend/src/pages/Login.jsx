@@ -15,10 +15,8 @@ import {
   Sparkles,
   CheckCircle2,
   AlertCircle,
-  FolderOpenDot,
   KeyRound,
   X,
-  Server,
   Zap,
 } from 'lucide-react';
 
@@ -194,14 +192,6 @@ const Login = () => {
           </h1>
         </Link>
 
-        {/* Server & Security Status */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white/90 rounded-full border border-gray-300 text-xs font-semibold text-gray-700 shadow-sm">
-            <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span>
-            <Server size={14} className="text-blue-500" />
-            <span>Secure Auth API Active</span>
-          </div>
-        </div>
       </header>
 
       {/* Main Auth Container */}
@@ -221,11 +211,10 @@ const Login = () => {
                       setError('');
                       setSuccessMsg('');
                     }}
-                    className={`px-6 py-2 rounded-full text-sm font-bold transition-all cursor-pointer ${
-                      !isSignUp
+                    className={`px-6 py-2 rounded-full text-sm font-bold transition-all cursor-pointer ${!isSignUp
                         ? 'bg-white text-blue-600 shadow-md'
                         : 'text-gray-500 hover:text-gray-900'
-                    }`}
+                      }`}
                   >
                     Sign In
                   </button>
@@ -237,11 +226,10 @@ const Login = () => {
                       setError('');
                       setSuccessMsg('');
                     }}
-                    className={`px-6 py-2 rounded-full text-sm font-bold transition-all cursor-pointer ${
-                      isSignUp
+                    className={`px-6 py-2 rounded-full text-sm font-bold transition-all cursor-pointer ${isSignUp
                         ? 'bg-white text-blue-600 shadow-md'
                         : 'text-gray-500 hover:text-gray-900'
-                    }`}
+                      }`}
                   >
                     Create Account
                   </button>
@@ -521,7 +509,7 @@ const Login = () => {
             </div>
 
             {/* Visual Simulated Drive Cards */}
-            <div className="relative z-10 my-8 space-y-3">
+            <div className="relative z-10 my-8">
               {/* Storage Gauge Card */}
               <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg">
                 <div className="flex items-center justify-between text-xs font-semibold mb-2">
@@ -538,32 +526,6 @@ const Login = () => {
                   <span>Fresh user accounts start with 15 GB</span>
                   <span className="font-semibold text-white">Full Free Access</span>
                 </p>
-              </div>
-
-              {/* Security Shield Card */}
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3.5 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                  <ShieldCheck size={20} className="text-emerald-300" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold leading-tight">Server Salted Hashing & JWT</h4>
-                  <p className="text-[11px] text-blue-100 leading-tight">
-                    Industry standard security protecting your credentials.
-                  </p>
-                </div>
-              </div>
-
-              {/* Fast Sharing Card */}
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3.5 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                  <FolderOpenDot size={20} className="text-amber-300" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold leading-tight">Intelligent Folders & Sharing</h4>
-                  <p className="text-[11px] text-blue-100 leading-tight">
-                    Quickly organize projects, media, and tech files.
-                  </p>
-                </div>
               </div>
             </div>
 
